@@ -1,0 +1,1073 @@
+Feedback,Class
+"The teacher explained the topic very clearly",Positive
+"I really enjoyed this class",Positive
+"The lectures were interesting and useful",Positive
+"The professor was very helpful",Positive
+"The course content was excellent",Positive
+"I learned many new things from this course",Positive
+"The classroom environment was comfortable",Positive
+"The teacher answered all my questions",Positive
+"The assignments were helpful for learning",Positive
+"The practical sessions were excellent",Positive
+"I am very satisfied with the course",Positive
+"The teaching method was effective",Positive
+"The instructor explained everything well",Positive
+"The course was organized and informative",Positive
+"I had a great learning experience",Positive
+"The teacher did not explain the topics properly",Negative
+"The lectures were boring and confusing",Negative
+"I did not understand the course content",Negative
+"The professor was not helpful",Negative
+"The assignments were too difficult",Negative
+"The classroom environment was uncomfortable",Negative
+"The teacher ignored my questions",Negative
+"The practical sessions were poorly organized",Negative
+"I am disappointed with this course",Negative
+"The teaching method was ineffective",Negative
+"The instructor explained everything poorly",Negative
+"The course was badly organized",Negative
+"The lectures were too long and boring",Negative
+"I had a bad learning experience",Negative
+"The course content was confusing",Negative
+
+
+# ============================================================
+# MULTINOMIAL NAIVE BAYES WITH LAPLACE ESTIMATION
+# Student Feedback Classification
+#
+# INPUT DATASET:
+# datasetlaplace.csv
+#
+# CountVectorizer is used for text feature extraction.
+# Naive Bayes is implemented manually from scratch.
+#
+# ============================================================
+
+import numpy as np
+import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+
+
+# ============================================================
+# 1. LOAD DATASET USING PANDAS
+# ============================================================
+
+print("=" * 70)
+print("MULTINOMIAL NAIVE BAYES CLASSIFICATION")
+print("=" * 70)
+
+df = pd.read_csv("datasetlaplace.csv")
+
+print("\nDataset loaded successfully.")
+
+print("\nDataset shape:")
+print(df.shape)
+
+print("\nColumn names:")
+print(df.columns.tolist())
+
+
+# ============================================================
+# 2. DISPLAY FIRST FIVE RECORDS
+# ============================================================
+
+print("\n" + "=" * 70)
+print("FIRST FIVE RECORDS")
+print("=" * 70)
+
+print(df.head())
+
+
+# ============================================================
+# DISPLAY CLASS DISTRIBUTION
+# ============================================================
+
+print("\n" + "=" * 70)
+print("CLASS DISTRIBUTION")
+print("=" * 70)
+
+print(
+    df["Class"].value_counts()
+)
+
+print("\nClass percentages:")
+
+print(
+    df["Class"]
+    .value_counts(normalize=True)
+    .mul(100)
+    .round(2)
+)
+
+
+# ============================================================
+# CHECK MISSING VALUES
+# ============================================================
+
+print("\n" + "=" * 70)
+print("MISSING VALUE CHECK")
+print("=" * 70)
+
+print(
+    df.isnull().sum()
+)
+
+
+# ============================================================
+# REMOVE ROWS WITH MISSING DATA
+# ============================================================
+
+df = df.dropna(
+    subset=["Feedback", "Class"]
+).reset_index(drop=True)
+
+
+# ============================================================
+# 3. COUNT VECTORIZER
+# ============================================================
+
+print("\n" + "=" * 70)
+print("COUNT VECTORIZER")
+print("=" * 70)
+
+vectorizer = CountVectorizer(
+    lowercase=True
+)
+
+X = vectorizer.fit_transform(
+    df["Feedback"]
+)
+
+y = df["Class"].values
+
+
+# Convert sparse matrix to NumPy array
+X = X.toarray()
+
+vocabulary = vectorizer.get_feature_names_out()
+
+print(
+    "\nNumber of documents:",
+    X.shape[0]
+)
+
+print(
+    "Number of vocabulary words:",
+    X.shape[1]
+)
+
+print("\nVocabulary:")
+
+print(
+    list(vocabulary)
+)
+
+
+# ============================================================
+# DISPLAY DOCUMENT-TERM MATRIX
+# ============================================================
+
+print("\n" + "=" * 70)
+print("DOCUMENT-TERM MATRIX")
+print("=" * 70)
+
+document_term_matrix = pd.DataFrame(
+    X,
+    columns=vocabulary
+)
+
+print(
+    document_term_matrix.head()
+)
+
+
+# ============================================================
+# 4. TRAIN-TEST SPLIT 80:20
+# ============================================================
+
+print("\n" + "=" * 70)
+print("80:20 TRAIN-TEST SPLIT")
+print("=" * 70)
+
+np.random.seed(42)
+
+positive_indices = np.where(
+    y == "Positive"
+)[0]
+
+negative_indices = np.where(
+    y == "Negative"
+)[0]
+
+np.random.shuffle(
+    positive_indices
+)
+
+np.random.shuffle(
+    negative_indices
+)
+
+
+# 80% training
+positive_train_count = int(
+    len(positive_indices) * 0.80
+)
+
+negative_train_count = int(
+    len(negative_indices) * 0.80
+)
+
+
+positive_train = positive_indices[
+    :positive_train_count
+]
+
+positive_test = positive_indices[
+    positive_train_count:
+]
+
+negative_train = negative_indices[
+    :negative_train_count
+]
+
+negative_test = negative_indices[
+    negative_train_count:
+]
+
+
+train_indices = np.concatenate(
+    [
+        positive_train,
+        negative_train
+    ]
+)
+
+test_indices = np.concatenate(
+    [
+        positive_test,
+        negative_test
+    ]
+)
+
+
+np.random.shuffle(
+    train_indices
+)
+
+np.random.shuffle(
+    test_indices
+)
+
+
+X_train = X[
+    train_indices
+]
+
+X_test = X[
+    test_indices
+]
+
+y_train = y[
+    train_indices
+]
+
+y_test = y[
+    test_indices
+]
+
+
+print(
+    "\nTotal records:",
+    len(df)
+)
+
+print(
+    "Training records:",
+    len(X_train)
+)
+
+print(
+    "Testing records:",
+    len(X_test)
+)
+
+print(
+    "\nTraining class distribution:"
+)
+
+print(
+    pd.Series(y_train).value_counts()
+)
+
+print(
+    "\nTesting class distribution:"
+)
+
+print(
+    pd.Series(y_test).value_counts()
+)
+
+
+# ============================================================
+# 5. MULTINOMIAL NAIVE BAYES FROM SCRATCH
+# ============================================================
+
+class MultinomialNaiveBayes:
+
+    def __init__(self, alpha):
+
+        self.alpha = alpha
+
+        self.classes = None
+
+        self.class_prior = {}
+
+        self.word_counts = {}
+
+        self.total_words = {}
+
+        self.word_probabilities = {}
+
+        self.vocabulary_size = 0
+
+
+    # --------------------------------------------------------
+    # TRAIN MODEL
+    # --------------------------------------------------------
+
+    def fit(self, X, y):
+
+        self.classes = np.unique(y)
+
+        self.vocabulary_size = X.shape[1]
+
+        total_documents = len(y)
+
+        for current_class in self.classes:
+
+            # Documents belonging to this class
+            class_documents = X[
+                y == current_class
+            ]
+
+            # Number of documents
+            class_document_count = len(
+                class_documents
+            )
+
+            # Prior probability
+            prior = (
+                class_document_count /
+                total_documents
+            )
+
+            self.class_prior[
+                current_class
+            ] = prior
+
+
+            # Count words in this class
+            counts = np.sum(
+                class_documents,
+                axis=0
+            )
+
+            self.word_counts[
+                current_class
+            ] = counts
+
+            # Total number of words
+            total_words = np.sum(
+                counts
+            )
+
+            self.total_words[
+                current_class
+            ] = total_words
+
+
+            # ----------------------------------------------
+            # Multinomial Naive Bayes formula
+            #
+            # P(w|C) =
+            #
+            # Count(w,C) + alpha
+            # -----------------
+            # N_C + alpha * V
+            # ----------------------------------------------
+
+            probabilities = (
+                counts + self.alpha
+            ) / (
+                total_words +
+                self.alpha *
+                self.vocabulary_size
+            )
+
+            self.word_probabilities[
+                current_class
+            ] = probabilities
+
+        return self
+
+
+    # --------------------------------------------------------
+    # PREDICT ONE MESSAGE
+    # --------------------------------------------------------
+
+    def predict_one(self, message_vector):
+
+        class_scores = {}
+
+        for current_class in self.classes:
+
+            # Start with prior probability
+            score = np.log(
+                self.class_prior[
+                    current_class
+                ]
+            )
+
+            # Add word probabilities
+            log_word_probabilities = np.log(
+                self.word_probabilities[
+                    current_class
+                ]
+            )
+
+            score += np.sum(
+                message_vector *
+                log_word_probabilities
+            )
+
+            class_scores[
+                current_class
+            ] = score
+
+        return max(
+            class_scores,
+            key=class_scores.get
+        )
+
+
+    # --------------------------------------------------------
+    # PREDICT MULTIPLE MESSAGES
+    # --------------------------------------------------------
+
+    def predict(self, X):
+
+        predictions = []
+
+        for message in X:
+
+            predictions.append(
+                self.predict_one(message)
+            )
+
+        return np.array(
+            predictions
+        )
+
+
+    # --------------------------------------------------------
+    # PREDICT CLASS PROBABILITIES
+    # --------------------------------------------------------
+
+    def predict_proba(self, X):
+
+        all_probabilities = []
+
+        for message in X:
+
+            log_scores = []
+
+            for current_class in self.classes:
+
+                log_prior = np.log(
+                    self.class_prior[
+                        current_class
+                    ]
+                )
+
+                log_word_probability = np.log(
+                    self.word_probabilities[
+                        current_class
+                    ]
+                )
+
+                score = (
+                    log_prior +
+                    np.sum(
+                        message *
+                        log_word_probability
+                    )
+                )
+
+                log_scores.append(
+                    score
+                )
+
+
+            # Convert log scores to probabilities
+            log_scores = np.array(
+                log_scores
+            )
+
+            max_score = np.max(
+                log_scores
+            )
+
+            exp_scores = np.exp(
+                log_scores - max_score
+            )
+
+            probabilities = (
+                exp_scores /
+                np.sum(exp_scores)
+            )
+
+            all_probabilities.append(
+                probabilities
+            )
+
+        return np.array(
+            all_probabilities
+        )
+
+
+# ============================================================
+# 6. TRAIN WITHOUT EFFECTIVE LAPLACE SMOOTHING
+# ============================================================
+
+print("\n" + "=" * 70)
+print("MODEL 1 - VERY SMALL ALPHA")
+print("=" * 70)
+
+small_alpha = 0.000001
+
+model_without_laplace = (
+    MultinomialNaiveBayes(
+        alpha=small_alpha
+    )
+)
+
+model_without_laplace.fit(
+    X_train,
+    y_train
+)
+
+print(
+    "Alpha =",
+    small_alpha
+)
+
+
+# ============================================================
+# 7. TRAIN WITH LAPLACE SMOOTHING
+# ============================================================
+
+print("\n" + "=" * 70)
+print("MODEL 2 - LAPLACE SMOOTHING")
+print("=" * 70)
+
+laplace_model = (
+    MultinomialNaiveBayes(
+        alpha=1
+    )
+)
+
+laplace_model.fit(
+    X_train,
+    y_train
+)
+
+print(
+    "Alpha = 1"
+)
+
+
+# ============================================================
+# 8. IDENTIFY WORDS NOT OCCURRING IN EACH CLASS
+# ============================================================
+
+print("\n" + "=" * 70)
+print("WORDS ABSENT FROM EACH CLASS")
+print("=" * 70)
+
+
+for current_class in laplace_model.classes:
+
+    counts = (
+        laplace_model
+        .word_counts[
+            current_class
+        ]
+    )
+
+    missing_words = vocabulary[
+        counts == 0
+    ]
+
+    print(
+        f"\nWords not occurring in "
+        f"{current_class}:"
+    )
+
+    print(
+        list(missing_words)
+    )
+
+
+# ============================================================
+# 9. UNSEEN WORD PROBABILITY
+# ============================================================
+
+print("\n" + "=" * 70)
+print("UNSEEN WORD PROBABILITY")
+print("=" * 70)
+
+
+# Find a word absent from Positive class
+positive_counts = (
+    laplace_model
+    .word_counts[
+        "Positive"
+    ]
+)
+
+positive_missing_indices = np.where(
+    positive_counts == 0
+)[0]
+
+
+if len(positive_missing_indices) > 0:
+
+    word_index = (
+        positive_missing_indices[0]
+    )
+
+    unseen_word = vocabulary[
+        word_index
+    ]
+
+    count_word = positive_counts[
+        word_index
+    ]
+
+    N_C = (
+        laplace_model
+        .total_words[
+            "Positive"
+        ]
+    )
+
+    V = len(vocabulary)
+
+
+    # ----------------------------------------------
+    # Laplace formula
+    # ----------------------------------------------
+
+    laplace_probability = (
+        count_word + 1
+    ) / (
+        N_C + V
+    )
+
+
+    # ----------------------------------------------
+    # Without smoothing
+    # ----------------------------------------------
+
+    no_smoothing_probability = (
+        count_word /
+        N_C
+    )
+
+
+    print(
+        "\nSelected unseen word:",
+        unseen_word
+    )
+
+    print(
+        "Class: Positive"
+    )
+
+    print(
+        "\nCount(w,C):",
+        count_word
+    )
+
+    print(
+        "N_C:",
+        N_C
+    )
+
+    print(
+        "V:",
+        V
+    )
+
+
+    print(
+        "\nWithout Laplace:"
+    )
+
+    print(
+        f"P({unseen_word}|Positive)"
+        f" = {count_word}/{N_C}"
+    )
+
+    print(
+        "Probability =",
+        no_smoothing_probability
+    )
+
+
+    print(
+        "\nWith Laplace smoothing:"
+    )
+
+    print(
+        f"P({unseen_word}|Positive)"
+        f" = (0 + 1)/({N_C} + {V})"
+    )
+
+    print(
+        "Probability =",
+        laplace_probability
+    )
+
+
+# ============================================================
+# 10. PREDICT TEST MESSAGES
+# ============================================================
+
+print("\n" + "=" * 70)
+print("TEST SET PREDICTIONS")
+print("=" * 70)
+
+
+predictions_without_laplace = (
+    model_without_laplace.predict(
+        X_test
+    )
+)
+
+predictions_laplace = (
+    laplace_model.predict(
+        X_test
+    )
+)
+
+
+test_feedback = df.iloc[
+    test_indices
+]["Feedback"].values
+
+
+results = pd.DataFrame({
+
+    "Feedback":
+        test_feedback,
+
+    "Actual":
+        y_test,
+
+    "Very_Small_Alpha":
+        predictions_without_laplace,
+
+    "Laplace_Alpha_1":
+        predictions_laplace
+})
+
+
+print(
+    results.to_string(
+        index=False
+    )
+)
+
+
+# ============================================================
+# ACCURACY
+# ============================================================
+
+accuracy_without_laplace = np.mean(
+    predictions_without_laplace ==
+    y_test
+)
+
+accuracy_laplace = np.mean(
+    predictions_laplace ==
+    y_test
+)
+
+
+print("\n" + "=" * 70)
+print("MODEL ACCURACY")
+print("=" * 70)
+
+print(
+    f"\nVery small alpha accuracy: "
+    f"{accuracy_without_laplace * 100:.2f}%"
+)
+
+print(
+    f"Laplace alpha=1 accuracy: "
+    f"{accuracy_laplace * 100:.2f}%"
+)
+
+
+# ============================================================
+# 11. PREDICTED CLASS PROBABILITIES FOR TEST DATA
+# ============================================================
+
+print("\n" + "=" * 70)
+print("PREDICTED CLASS PROBABILITIES")
+print("=" * 70)
+
+
+test_probabilities = (
+    laplace_model.predict_proba(
+        X_test
+    )
+)
+
+
+probability_table = pd.DataFrame(
+    test_probabilities,
+    columns=[
+        f"P({c})"
+        for c in laplace_model.classes
+    ]
+)
+
+probability_table.insert(
+    0,
+    "Actual",
+    y_test
+)
+
+probability_table.insert(
+    1,
+    "Predicted",
+    predictions_laplace
+)
+
+print(
+    probability_table.to_string(
+        index=False
+    )
+)
+
+
+# ============================================================
+# 12. ACCEPT NEW FEEDBACK FROM USER
+# ============================================================
+
+print("\n" + "=" * 70)
+print("NEW FEEDBACK PREDICTION")
+print("=" * 70)
+
+new_feedback = input(
+    "\nEnter a new student feedback message: "
+)
+
+
+# Convert message using the SAME CountVectorizer
+new_message = vectorizer.transform(
+    [new_feedback]
+).toarray()
+
+
+# Predict class
+new_prediction = (
+    laplace_model.predict(
+        new_message
+    )[0]
+)
+
+
+# Predict probabilities
+new_probabilities = (
+    laplace_model.predict_proba(
+        new_message
+    )[0]
+)
+
+
+print(
+    "\nNew Feedback:"
+)
+
+print(
+    new_feedback
+)
+
+print(
+    "\nPredicted Class:"
+)
+
+print(
+    new_prediction
+)
+
+
+# ============================================================
+# DISPLAY PROBABILITIES
+# ============================================================
+
+print(
+    "\nPredicted Class Probabilities:"
+)
+
+for i, current_class in enumerate(
+    laplace_model.classes
+):
+
+    print(
+        f"{current_class}: "
+        f"{new_probabilities[i] * 100:.2f}%"
+    )
+
+
+# ============================================================
+# 13. EXPLAIN LAPLACE ESTIMATION
+# ============================================================
+
+print("\n" + "=" * 70)
+print("EXPLANATION OF LAPLACE ESTIMATION")
+print("=" * 70)
+
+print("""
+Multinomial Naive Bayes calculates the probability of a word
+given a class.
+
+Without smoothing:
+
+P(w|C) = Count(w,C) / N_C
+
+If a word has never appeared in a class:
+
+Count(w,C) = 0
+
+Therefore:
+
+P(w|C) = 0
+
+Naive Bayes multiplies the probabilities of words in a message.
+Therefore, one zero probability can make the probability of
+the entire message equal to zero.
+
+Laplace estimation solves this problem by adding 1 to every
+word count.
+
+The formula becomes:
+
+P(w|C) =
+(Count(w,C) + 1)
+-----------------
+(N_C + V)
+
+where:
+
+Count(w,C) = number of times word w occurs in class C
+
+N_C = total number of words in class C
+
+V = total number of unique words in the vocabulary
+
+For an unseen word:
+
+Count(w,C) = 0
+
+Therefore:
+
+P(w|C) = 1 / (N_C + V)
+
+The probability is now small but NOT zero.
+
+Therefore, Laplace smoothing prevents the zero-probability
+problem and allows the classifier to handle words that were
+not observed in a particular class during training.
+""")
+
+
+# ============================================================
+# SAVE RESULTS
+# ============================================================
+
+results.to_csv(
+    "naive_bayes_predictions.csv",
+    index=False
+)
+
+probability_table.to_csv(
+    "naive_bayes_probabilities.csv",
+    index=False
+)
+
+
+# ============================================================
+# FINAL SUMMARY
+# ============================================================
+
+print("\n" + "=" * 70)
+print("FINAL SUMMARY")
+print("=" * 70)
+
+print(
+    "\nDataset:",
+    "datasetlaplace.csv"
+)
+
+print(
+    "Total records:",
+    len(df)
+)
+
+print(
+    "Vocabulary size:",
+    len(vocabulary)
+)
+
+print(
+    "\nVery small alpha:",
+    small_alpha
+)
+
+print(
+    "Very small alpha accuracy:",
+    f"{accuracy_without_laplace * 100:.2f}%"
+)
+
+print(
+    "\nLaplace alpha:",
+    1
+)
+
+print(
+    "Laplace accuracy:",
+    f"{accuracy_laplace * 100:.2f}%"
+)
+
+print(
+    "\nNew feedback prediction:",
+    new_prediction
+)
+
+print(
+    "\nResult files created:"
+)
+
+print(
+    "1. naive_bayes_predictions.csv"
+)
+
+print(
+    "2. naive_bayes_probabilities.csv"
+)
+
+print("\nProgram completed successfully.")
