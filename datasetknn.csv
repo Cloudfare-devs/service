@@ -1,0 +1,11 @@
+Age,Gender,Height,Weight,BMI,BloodPressure,Glucose,Cholesterol,Smoking,Alcohol,ExerciseLevel,FamilyHistory,HeartRate,RiskClass
+40,Male,146,80,37.5,121,155,165,Yes,Yes,High,No,87,High Risk
+21,Male,190,98,27.1,118,184,270,No,Yes,Low,No,76,High Risk
+26,Male,169,57,20.0,135,158,274,No,Yes,High,No,89,Low Risk
+29,Female,183,69,21.1,100,87,191,Yes,No,Low,Yes,110,High Risk
+43,Male,168,90,31.9,116,138,299,Yes,Yes,High,Yes,65,High Risk
+44,Female,188,86,24.3,97,128,228,No,No,Medium,Yes,68,Low Risk
+33,Female,170,103,35.6,108,137,155,Yes,No,High,No,92,Low Risk
+52,Female,150,51,22.7,104,109,260,No,No,High,Yes,79,Low Risk
+55,Male,188,153,56.7,177,207,210,No,No,High,No,108,High Risk
+66,Female,177,67,21.4,154,97,280,No,No,Low,No,103,High Risk
